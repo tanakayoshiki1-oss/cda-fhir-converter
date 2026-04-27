@@ -48,6 +48,8 @@ class CdaParser:
             self.root = self.tree.getroot()
         except etree.XMLSyntaxError as e:
             raise ValidationError(f"XML構文エラー: {e}")
+        except OSError as e:
+            raise ValidationError(f"ファイル読み込みエラー: {e}")
 
         if self.root.tag != f"{{{NS['hl7']}}}ClinicalDocument":
             raise ValidationError("ルートノードが ClinicalDocument ではありません")
