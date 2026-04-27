@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 INPUT_DIR = Path(os.getenv("INPUT_DIR", "data/input"))
 
 
-def run_conversion_job():
+def run_conversion_job(session_factory=None):
     logger.info(f"Scanning: {INPUT_DIR}")
     xml_files = sorted(INPUT_DIR.glob("*.xml"))
 
@@ -19,4 +19,11 @@ def run_conversion_job():
 
     logger.info(f"Found {len(xml_files)} file(s).")
     for xml_path in xml_files:
-        convert_file(xml_path)
+        if session_factory:
+            session = session_factory()
+            try:
+                convert_file(xml_path, db_session=session)
+            finally:
+                session.close()
+        else:
+            convert_file(xml_path)

@@ -5,8 +5,14 @@ services:
       dockerfile: docker/Dockerfile
     volumes:
       - ../data:/app/data
-    env_file:
-      - ../.env
+    environment:
+      DATABASE_URL: postgresql://user:password@db:5432/cda_fhir
+      WATCH_INTERVAL_SECONDS: "30"
+      INPUT_DIR: data/input
+      OUTPUT_DIR: data/output
+      SUCCESS_DIR: data/success
+      ERROR_DIR: data/error
+      LOG_DIR: data/logs
     depends_on:
       db:
         condition: service_healthy
