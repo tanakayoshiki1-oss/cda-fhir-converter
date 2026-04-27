@@ -5,9 +5,13 @@ import shutil
 import traceback
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
+
+from sqlalchemy.orm import Session
 
 from src.converter.cda_parser import CdaParser, ValidationError
 from src.converter.fhir_builder import FhirBundleBuilder
+from src.db.models import JobRepository
 
 logger = logging.getLogger(__name__)
 
@@ -17,9 +21,12 @@ ERROR_DIR = Path(os.getenv("ERROR_DIR", "data/error"))
 LOG_DIR = Path(os.getenv("LOG_DIR", "data/logs"))
 
 
-def convert_file(xml_path: Path):
+def convert_file(xml_path: Path, db_session: Optional[Session] = None):
     logger.info(f"Processing: {xml_path.name}")
     timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+
+    repo = JobRepository(db_session) if db_session else None
+    job = repo.create(xml_path.name, str(xml_path)) if repo else None
 
     try:
         parser = CdaParser(xml_path)
@@ -37,11 +44,17 @@ def convert_file(xml_path: Path):
         _move_file(xml_path, SUCCESS_DIR)
         logger.info(f"Conversion success: {xml_path.name} → {output_path.name}")
 
+        if job and repo:
+            repo.mark_success(job, str(output_path))
+
     except Exception as e:
         error_type = type(e).__name__
         logger.error(f"Conversion failed: {xml_path.name} - {error_type}: {e}")
         _write_error_log(xml_path, timestamp, error_type, e)
         _move_file(xml_path, ERROR_DIR)
+
+        if job and repo:
+            repo.mark_error(job, error_type, str(e))
 
 
 def _move_file(src: Path, dest_dir: Path):

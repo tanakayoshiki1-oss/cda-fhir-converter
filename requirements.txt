@@ -1,7 +1,7 @@
 lxml==5.2.2
 fhir.resources==7.1.0
 apscheduler==3.10.4
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.12
 SQLAlchemy==2.0.30
 python-dotenv==1.0.1
 pytest==8.2.0
